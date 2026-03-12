@@ -1,0 +1,6 @@
+{
+  "name": "RFID Reminder System",
+  "render_readme": true,
+  "homeassistant": "2023.5.0",
+  "filename": "rfid_reminder.zip"
+}
