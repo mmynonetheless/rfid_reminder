@@ -1,0 +1,39 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "RFID Reminder Configuration",
+        "description": "Set up your RFID-based reminder system",
+        "data": {
+          "name": "Name",
+          "reminder_interval": "Reminder Interval (hours)",
+          "alert_volume": "Alert Volume (0.1-1.0)",
+          "alert_duration": "Alert Duration (seconds)",
+          "alert_sound": "Alert Sound File Path",
+          "media_players": "Media Players",
+          "phone_numbers": "Phone Numbers (comma separated)",
+          "custom_message": "Custom Message",
+          "rfid_tag": "Registered RFID Tag"
+        }
+      }
+    },
+    "options": {
+      "step": {
+        "init": {
+          "title": "RFID Reminder Options",
+          "description": "Modify your reminder settings",
+          "data": {
+            "reminder_interval": "Reminder Interval (hours)",
+            "alert_volume": "Alert Volume (0.1-1.0)",
+            "alert_duration": "Alert Duration (seconds)",
+            "alert_sound": "Alert Sound File Path",
+            "media_players": "Media Players",
+            "phone_numbers": "Phone Numbers (comma separated)",
+            "custom_message": "Custom Message",
+            "rfid_tag": "Registered RFID Tag"
+          }
+        }
+      }
+    }
+  }
+}
