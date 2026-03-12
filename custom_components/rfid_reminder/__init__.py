@@ -7,6 +7,7 @@ from typing import Any, Dict, Optional
 import voluptuous as vol
 
 from homeassistant.config_entries import ConfigEntry
+from . import config_flow
 from homeassistant.const import (
     CONF_ENTITY_ID,
     CONF_NAME,
