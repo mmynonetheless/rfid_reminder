@@ -1,0 +1,483 @@
+# /config/packages/rfid_reminder.yaml
+# This goes in your Home Assistant config directory
+
+##############################################################
+# RFID REMINDER SYSTEM
+# Every 4 hours, plays audible alerts on all media players
+# and designated phones until an RFID tag is scanned
+##############################################################
+
+# ============================================================
+# INPUT NUMBERS (For adjustable timing)
+# ============================================================
+input_number:
+  reminder_interval_hours:
+    name: Reminder Interval (Hours)
+    min: 0.5
+    max: 24
+    step: 0.5
+    unit_of_measurement: "hours"
+    icon: mdi:timer-outline
+    mode: slider
+    
+  reminder_volume:
+    name: Alert Volume
+    min: 0.1
+    max: 1.0
+    step: 0.1
+    unit_of_measurement: "%"
+    icon: mdi:volume-high
+    mode: slider
+    
+  alert_duration:
+    name: Alert Duration (Seconds)
+    min: 5
+    max: 300
+    step: 5
+    unit_of_measurement: "seconds"
+    icon: mdi:timer-sand
+    mode: slider
+
+# ============================================================
+# INPUT BOOLEANS (For toggling features)
+# ============================================================
+input_boolean:
+  reminder_enabled:
+    name: Enable Reminder System
+    icon: mdi:bell-ring
+    initial: on
+    
+  reminder_active:
+    name: Reminder Currently Active
+    icon: mdi:bell-ring-outline
+    initial: off
+    
+  reminder_play_media_players:
+    name: Play on Media Players
+    icon: mdi:speaker-multiple
+    initial: on
+    
+  reminder_play_phones:
+    name: Play on Designated Phones
+    icon: mdi:cellphone
+    initial: on
+    
+  reminder_debug_mode:
+    name: Debug Mode
+    icon: mdi:bug
+    initial: off
+
+# ============================================================
+# INPUT SELECTS (For customizable options)
+# ============================================================
+input_select:
+  reminder_audio_file:
+    name: Alert Sound
+    options:
+      - "/media/local/alarm.mp3"
+      - "/media/local/chime.mp3"
+      - "/media/local/reminder.mp3"
+      - "/media/local/bell.mp3"
+      - "/media/local/voice_reminder.mp3"
+      - "/media/local/beep.mp3"
+    icon: mdi:music
+    initial: "/media/local/alarm.mp3"
+    
+  reminder_media_players:
+    name: Media Players to Alert
+    options:
+      - "All Speakers"
+      - "Living Room Only"
+      - "Bedroom Only"
+      - "Kitchen Only"
+      - "Custom Selection"
+    icon: mdi:speaker-wireless
+    initial: "All Speakers"
+    
+  reminder_alert_style:
+    name: Alert Style
+    options:
+      - "Continuous Loop"
+      - "Play Once Per Minute"
+      - "Play Once Then Wait"
+      - "Escalating Volume"
+    icon: mdi:playlist-play
+    initial: "Continuous Loop"
+
+# ============================================================
+# INPUT TEXT (For phone numbers and custom messages)
+# ============================================================
+input_text:
+  reminder_phone_numbers:
+    name: Phone Numbers (comma separated)
+    initial: "+1234567890, +0987654321"
+    icon: mdi:phone
+    
+  reminder_custom_message:
+    name: Custom Alert Message
+    initial: "Reminder! Please take your medication"
+    icon: mdi:message-text
+
+# ============================================================
+# AUTOMATIONS
+# ============================================================
+automation:
+  # ------------------------------------------------------------
+  # Main Reminder Timer
+  # ------------------------------------------------------------
+  - id: "rfid_reminder_timer"
+    alias: "RFID Reminder - Timer"
+    description: "Triggers reminder every X hours"
+    trigger:
+      - platform: time_pattern
+        hours: "/4"  # Default 4 hours, will be overridden by input_number
+        id: periodic_trigger
+    condition:
+      - condition: state
+        entity_id: input_boolean.reminder_enabled
+        state: "on"
+      - condition: state
+        entity_id: input_boolean.reminder_active
+        state: "off"
+    action:
+      - service: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.reminder_active
+      
+      - service: automation.trigger
+        target:
+          entity_id: automation.rfid_reminder_alert_system
+      
+      - service: system_log.write
+        data:
+          message: "RFID Reminder triggered at {{ now().strftime('%H:%M:%S') }}"
+          level: info
+        enabled: "{{ states('input_boolean.reminder_debug_mode') == 'on' }}"
+
+  # ------------------------------------------------------------
+  # Main Alert System
+  # ------------------------------------------------------------
+  - id: "rfid_reminder_alert_system"
+    alias: "RFID Reminder - Alert System"
+    description: "Plays alerts on all configured devices"
+    mode: parallel
+    max_exceeded: silent
+    trigger:
+      - platform: state
+        entity_id: input_boolean.reminder_active
+        to: "on"
+    action:
+      - service: system_log.write
+        data:
+          message: "Starting RFID reminder alerts"
+          level: info
+        enabled: "{{ states('input_boolean.reminder_debug_mode') == 'on' }}"
+      
+      # Play on media players
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: input_boolean.reminder_play_media_players
+                state: "on"
+            sequence:
+              - action: automation.trigger
+                target:
+                  entity_id: automation.rfid_reminder_media_player_alert
+          
+          # Play on phones
+          - conditions:
+              - condition: state
+                entity_id: input_boolean.reminder_play_phones
+                state: "on"
+            sequence:
+              - action: automation.trigger
+                target:
+                  entity_id: automation.rfid_reminder_phone_alert
+
+  # ------------------------------------------------------------
+  # Media Player Alert Loop
+  # ------------------------------------------------------------
+  - id: "rfid_reminder_media_player_alert"
+    alias: "RFID Reminder - Media Player Alert"
+    description: "Loops alert on media players until cancelled"
+    mode: single
+    max_exceeded: silent
+    trigger:
+      - platform: homeassistant
+        event: start
+    action:
+      - repeat:
+          while:
+            - condition: state
+              entity_id: input_boolean.reminder_active
+              state: "on"
+          sequence:
+            # Get list of media players based on selection
+            - variables:
+                media_players: >
+                  {% set selection = states('input_select.reminder_media_players') %}
+                  {% if selection == 'All Speakers' %}
+                    {{ states.media_player | selectattr('attributes.supported_features', 'defined') | map(attribute='entity_id') | list }}
+                  {% elif selection == 'Living Room Only' %}
+                    {{ states.media_player | selectattr('entity_id', 'search', 'living_room') | map(attribute='entity_id') | list }}
+                  {% elif selection == 'Bedroom Only' %}
+                    {{ states.media_player | selectattr('entity_id', 'search', 'bedroom') | map(attribute='entity_id') | list }}
+                  {% elif selection == 'Kitchen Only' %}
+                    {{ states.media_player | selectattr('entity_id', 'search', 'kitchen') | map(attribute='entity_id') | list }}
+                  {% else %}
+                    {{ ['media_player.living_room_speaker', 'media_player.bedroom_speaker'] }}
+                  {% endif %}
+            
+            # Play alert on each media player
+            - repeat:
+                for_each: "{{ media_players }}"
+                sequence:
+                  - service: media_player.volume_set
+                    target:
+                      entity_id: "{{ repeat.item }}"
+                    data:
+                      volume_level: "{{ states('input_number.reminder_volume') | float }}"
+                  
+                  - service: media_player.play_media
+                    target:
+                      entity_id: "{{ repeat.item }}"
+                    data:
+                      media_content_id: "{{ states('input_select.reminder_audio_file') }}"
+                      media_content_type: music
+                      enqueue: replace
+                      
+                  - service: system_log.write
+                    data:
+                      message: "Playing alert on {{ repeat.item }}"
+                      level: debug
+                    enabled: "{{ states('input_boolean.reminder_debug_mode') == 'on' }}"
+            
+            # Wait based on alert style
+            - delay:
+                seconds: >
+                  {% set style = states('input_select.reminder_alert_style') %}
+                  {% if style == 'Continuous Loop' %}5
+                  {% elif style == 'Play Once Per Minute' %}55
+                  {% elif style == 'Play Once Then Wait' %}300
+                  {% else %}30
+                  {% endif %}
+
+  # ------------------------------------------------------------
+  # Phone Alert Service
+  # ------------------------------------------------------------
+  - id: "rfid_reminder_phone_alert"
+    alias: "RFID Reminder - Phone Alert"
+    description: "Sends notifications to designated phones"
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: input_boolean.reminder_active
+        to: "on"
+    action:
+      - repeat:
+          while:
+            - condition: state
+              entity_id: input_boolean.reminder_active
+              state: "on"
+          sequence:
+            - variables:
+                phone_list: "{{ states('input_text.reminder_phone_numbers').split(',') | map('trim') | list }}"
+            
+            - repeat:
+                for_each: "{{ phone_list }}"
+                sequence:
+                  - service: notify.notify
+                    data:
+                      title: "RFID Reminder Alert"
+                      message: >
+                        {{ states('input_text.reminder_custom_message') }}
+                        
+                        ⏰ Time: {{ now().strftime('%I:%M %p') }}
+                        🏠 Please scan your RFID tag to stop this reminder.
+                      target: "{{ repeat.item }}"
+                      data:
+                        push:
+                          sound:
+                            name: "default"
+                            critical: 1
+                            volume: "{{ (states('input_number.reminder_volume') | float * 100) | int }}"
+                        priority: high
+                        ttl: 0
+                        
+                  - service: system_log.write
+                    data:
+                      message: "Sent alert to phone {{ repeat.item }}"
+                      level: debug
+                    enabled: "{{ states('input_boolean.reminder_debug_mode') == 'on' }}"
+            
+            # Wait between phone notifications
+            - delay:
+                seconds: >
+                  {% set style = states('input_select.reminder_alert_style') %}
+                  {% if style == 'Continuous Loop' %}30
+                  {% elif style == 'Play Once Per Minute' %}55
+                  {% elif style == 'Play Once Then Wait' %}300
+                  {% else %}60
+                  {% endif %}
+
+  # ------------------------------------------------------------
+  # RFID Tag Scanner
+  # ------------------------------------------------------------
+  - id: "rfid_reminder_scanner"
+    alias: "RFID Reminder - Tag Scanner"
+    description: "Detects RFID tag scan to reset timer"
+    trigger:
+      - platform: event
+        event_type: tag_scanned
+      - platform: mqtt
+        topic: "rfid/scanner/tag"
+    condition:
+      - condition: state
+        entity_id: input_boolean.reminder_active
+        state: "on"
+    action:
+      - service: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.reminder_active
+      
+      - service: media_player.media_stop
+        target:
+          entity_id: all
+      
+      - service: notify.notify
+        data:
+          message: "✅ Reminder cleared by RFID tag {{ trigger.event.data.tag_id if trigger.event else trigger.payload }}"
+          title: "RFID Reminder System"
+      
+      - service: system_log.write
+        data:
+          message: "RFID Reminder cleared by tag"
+          level: info
+      
+      # Reset the timer
+      - service: automation.turn_off
+        target:
+          entity_id: automation.rfid_reminder_timer
+      
+      - delay:
+          seconds: 5
+      
+      - service: automation.turn_on
+        target:
+          entity_id: automation.rfid_reminder_timer
+
+  # ------------------------------------------------------------
+  # RFID Tag Registration
+  # ------------------------------------------------------------
+  - id: "rfid_reminder_register_tag"
+    alias: "RFID Reminder - Register New Tag"
+    description: "Allows registration of new RFID tags"
+    mode: single
+    trigger:
+      - platform: event
+        event_type: rfid_reminder_register
+    action:
+      - service: mqtt.publish
+        data:
+          topic: "rfid/scanner/register"
+          payload: "active"
+          retain: false
+      
+      - service: notify.notify
+        data:
+          message: "RFID scanner in registration mode. Please scan a tag within 30 seconds."
+          title: "RFID Registration"
+      
+      - wait_for_trigger:
+          - platform: event
+            event_type: tag_scanned
+          - platform: mqtt
+            topic: "rfid/scanner/tag"
+        timeout:
+          seconds: 30
+      
+      - choose:
+          - conditions:
+              - condition: template
+                value_template: "{{ wait.trigger is defined }}"
+            sequence:
+              - service: input_text.set_value
+                target:
+                  entity_id: input_text.registered_rfid_tag
+                data:
+                  value: >
+                    {{ wait.trigger.event.data.tag_id if wait.trigger.event 
+                       else wait.trigger.payload }}
+              
+              - service: notify.notify
+                data:
+                  message: "RFID tag registered successfully!"
+                  title: "RFID Registration"
+        
+          - conditions:
+              - condition: template
+                value_template: "{{ wait.trigger is not defined }}"
+            sequence:
+              - service: notify.notify
+                data:
+                  message: "RFID registration timed out"
+                  title: "RFID Registration"
+      
+      - service: mqtt.publish
+        data:
+          topic: "rfid/scanner/register"
+          payload: "inactive"
+          retain: false
+
+# ============================================================
+# SCRIPT - Manual Control
+# ============================================================
+script:
+  rfid_reminder_trigger_now:
+    alias: "Trigger Reminder Now"
+    sequence:
+      - service: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.reminder_active
+      - service: automation.trigger
+        target:
+          entity_id: automation.rfid_reminder_alert_system
+  
+  rfid_reminder_cancel_now:
+    alias: "Cancel Reminder Now"
+    sequence:
+      - service: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.reminder_active
+      - service: media_player.media_stop
+        target:
+          entity_id: all
+  
+  rfid_reminder_register_new_tag:
+    alias: "Register New RFID Tag"
+    sequence:
+      - event: rfid_reminder_register
+        event_data: {}
+  
+  rfid_reminder_test_alert:
+    alias: "Test Alert System"
+    sequence:
+      - service: automation.trigger
+        target:
+          entity_id: automation.rfid_reminder_alert_system
+      - delay:
+          seconds: 10
+      - service: automation.trigger
+        target:
+          entity_id: automation.rfid_reminder_phone_alert
+
+# ============================================================
+# TEXT INPUT - Registered RFID Tag
+# ============================================================
+input_text:
+  registered_rfid_tag:
+    name: Registered RFID Tag
+    icon: mdi:rfid
+    initial: ""
+    max: 255
+
