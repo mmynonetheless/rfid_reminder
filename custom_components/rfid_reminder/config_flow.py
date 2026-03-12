@@ -1,4 +1,5 @@
 """Config flow for RFID Reminder integration."""
+
 import voluptuous as vol
 
 from homeassistant import config_entries
@@ -22,9 +23,8 @@ from .const import (
     DOMAIN,
 )
 
-class RFIDReminderConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+=class RFIDReminderConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for RFID Reminder."""
-
     VERSION = 1
 
     async def async_step_user(self, user_input=None):
