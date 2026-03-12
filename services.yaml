@@ -1,0 +1,30 @@
+trigger_reminder:
+  name: Trigger Reminder
+  description: Manually trigger the RFID reminder
+  target:
+    entity:
+      integration: rfid_reminder
+      domain: sensor
+
+clear_reminder:
+  name: Clear Reminder
+  description: Manually clear the RFID reminder
+  target:
+    entity:
+      integration: rfid_reminder
+      domain: sensor
+
+register_tag:
+  name: Register RFID Tag
+  description: Register an RFID tag for this reminder
+  target:
+    entity:
+      integration: rfid_reminder
+      domain: sensor
+  fields:
+    tag:
+      name: RFID Tag
+      description: The RFID tag ID to register
+      required: true
+      selector:
+        text:
