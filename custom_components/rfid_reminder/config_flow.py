@@ -1,10 +1,10 @@
 """Config flow for RFID Reminder integration."""
-
 import voluptuous as vol
 
 from homeassistant import config_entries
 from homeassistant.core import callback
 from homeassistant.helpers import selector
+from homeassistant.helpers.selector import EntitySelector, EntitySelectorConfig
 
 from .const import (
     CONF_ALERT_DURATION,
@@ -37,12 +37,6 @@ class RFIDReminderConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 data=user_input,
             )
         
-        # Get available media players
-        media_players = [
-            selector.EntitySelectorEntityConfig(entity_id=entity_id)
-            for entity_id in self.hass.states.async_entity_ids("media_player")
-        ]
-        
         # Build schema
         schema = vol.Schema(
             {
@@ -57,8 +51,8 @@ class RFIDReminderConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     CONF_ALERT_DURATION, default=DEFAULT_ALERT_DURATION
                 ): vol.All(vol.Coerce(int), vol.Range(min=5, max=300)),
                 vol.Optional(CONF_ALERT_SOUND, default=DEFAULT_ALERT_SOUND): str,
-                vol.Optional(CONF_MEDIA_PLAYERS, default=[]): selector.EntitySelector(
-                    selector.EntitySelectorConfig(
+                vol.Optional(CONF_MEDIA_PLAYERS, default=[]): EntitySelector(
+                    EntitySelectorConfig(
                         domain="media_player",
                         multiple=True,
                     )
@@ -118,8 +112,8 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 vol.Optional(
                     CONF_MEDIA_PLAYERS,
                     default=config.get(CONF_MEDIA_PLAYERS, []),
-                ): selector.EntitySelector(
-                    selector.EntitySelectorConfig(
+                ): EntitySelector(
+                    EntitySelectorConfig(
                         domain="media_player",
                         multiple=True,
                     )
