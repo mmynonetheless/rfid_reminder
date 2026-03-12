@@ -96,12 +96,6 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         # Get current config
         config = self.config_entry.data
         
-        # Get available media players
-        media_players = [
-            selector.EntitySelectorEntityConfig(entity_id=entity_id)
-            for entity_id in self.hass.states.async_entity_ids("media_player")
-        ]
-        
         # Build schema with current values
         schema = vol.Schema(
             {
