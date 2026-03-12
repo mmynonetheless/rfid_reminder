@@ -16,9 +16,12 @@ CONF_CUSTOM_MESSAGE = "custom_message"
 # Default values
 DEFAULT_INTERVAL = 4
 DEFAULT_VOLUME = 0.7
-DEFAULT_DURATION = 30
-DEFAULT_MESSAGE = "Time for your reminder!"
-DEFAULT_SOUND = "/media/local/alarm.mp3"
+DEFAULT_ALERT_DURATION = 30
+DEFAULT_ALERT_SOUND = "/media/local/alarm.mp3"
+DEFAULT_CUSTOM_MESSAGE = "Time for your reminder!"
+DEFAULT_MEDIA_PLAYERS = []
+DEFAULT_PHONE_NUMBERS = []
+DEFAULT_RFID_TAG = ""
 
 # Event types
 EVENT_RFID_TAG_SCANNED = "rfid_reminder_tag_scanned"
@@ -34,5 +37,5 @@ SERVICE_REGISTER_TAG = "register_tag"
 ATTR_REMINDER_ACTIVE = "reminder_active"
 ATTR_LAST_TRIGGERED = "last_triggered"
 ATTR_LAST_CLEARED = "last_cleared"
-ATTR_REGISTERED_TAG = "registered_tag"
 ATTR_NEXT_REMINDER = "next_reminder"
+ATTR_REGISTERED_TAG = "registered_tag"
