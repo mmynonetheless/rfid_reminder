@@ -13,9 +13,9 @@ CONF_PHONE_NUMBERS = "phone_numbers"
 CONF_RFID_TAG = "rfid_tag"
 CONF_CUSTOM_MESSAGE = "custom_message"
 
-# Default values
+# Default values - THESE MUST MATCH what config_flow.py imports
 DEFAULT_INTERVAL = 4
-DEFAULT_VOLUME = 0.7
+DEFAULT_ALERT_VOLUME = 0.7           # Make sure this line exists!
 DEFAULT_ALERT_DURATION = 30
 DEFAULT_ALERT_SOUND = "/media/local/alarm.mp3"
 DEFAULT_CUSTOM_MESSAGE = "Time for your reminder!"
