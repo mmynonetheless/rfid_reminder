@@ -23,7 +23,7 @@ from .const import (
     DOMAIN,
 )
 
-=class RFIDReminderConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+class RFIDReminderConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for RFID Reminder."""
     VERSION = 1
 
