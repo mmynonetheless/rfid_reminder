@@ -43,9 +43,6 @@ from .const import (
     DEFAULT_ALERT_VOLUME,
     DEFAULT_CUSTOM_MESSAGE,
     DEFAULT_INTERVAL,
-    DEFAULT_MEDIA_PLAYERS,
-    DEFAULT_PHONE_NUMBERS,
-    DEFAULT_RFID_TAG,
     DOMAIN,
     EVENT_RFID_TAG_SCANNED,
     EVENT_REMINDER_CLEARED,
@@ -61,7 +58,7 @@ CONFIG_SCHEMA = vol.Schema(
     {
         DOMAIN: vol.Schema(
             {
-                vol.Optional(CONF_REMINDER_INTERVAL, default=DEFAULT_INTERVAL): cv.positive_int,
+                vol.Optional(CONF_REMINDER_INTERVAL, default=DEFAULT_INTERVAL): vol.Coerce(float),
                 vol.Optional(CONF_ALERT_VOLUME, default=DEFAULT_ALERT_VOLUME): cv.small_float,
                 vol.Optional(CONF_ALERT_DURATION, default=DEFAULT_ALERT_DURATION): cv.positive_int,
                 vol.Optional(CONF_ALERT_SOUND, default=DEFAULT_ALERT_SOUND): cv.string,
