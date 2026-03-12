@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "requirements": [],
   "dependencies": [],
-  "codeowners": ["@your-github-username"],
+  "codeowners": ["@mmynonetheless"],
   "config_flow": true,
   "iot_class": "local_polling",
   "documentation": "https://github.com/your-github-username/rfid_reminder",
