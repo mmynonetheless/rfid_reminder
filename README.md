@@ -28,7 +28,7 @@ A customizable reminder system that triggers audible alerts on media players and
 7. Restart Home Assistant
 
 ### Manual Installation
-1. Download the `rfid_reminder` folder
+1. Download the `ha-rfid-reminder` folder
 2. Copy it to your `custom_components` directory
 3. Restart Home Assistant
 
