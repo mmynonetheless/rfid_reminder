@@ -7,7 +7,7 @@
   "codeowners": ["@mmynonetheless"],
   "config_flow": true,
   "iot_class": "local_polling",
-  "documentation": "https://github.com/your-github-username/rfid_reminder",
-  "issue_tracker": "https://github.com/your-github-username/rfid_reminder/issues",
+  "documentation": "https://github.com/mmynonetheless/ha-rfid-reminder",
+  "issue_tracker": "https://github.com/mmynonetheless/ha-rfid-reminder/issues",
   "integration_type": "helper"
 }
